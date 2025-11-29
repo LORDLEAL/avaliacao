@@ -1,1 +1,252 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação Segura</title>
+    <!-- Carregamento do Tailwind CSS para um design limpo e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* Estilo para a mensagem de alerta, que substitui o alert() padrão */
+        .custom-alert {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <div id="main-interface" class="w-full max-w-xl bg-white p-6 md:p-10 rounded-xl shadow-2xl border border-gray-100 transform transition duration-500 hover:shadow-3xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4 border-b pb-2">Ambiente de Avaliação Segura</h1>
+        <p class="text-gray-600 mb-6">Mestre Leal, clique no botão abaixo para abrir a janela de avaliação. As seguintes restrições serão aplicadas na nova janela:</p>
+
+        <ul class="space-y-3 text-sm text-gray-700 bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m-1.414-4.95l-.707 3.536m2.828-2.828l3.536 3.536m-1.414 4.95l-.707 3.536M12 21h6a2 2 0 002-2v-6m-2-4v-4m-7 4l-3.536-3.536M3 12a9 9 0 119 9h6m0-6v-6m-6 4a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Bloqueio de atalhos de cópia/cola (`Ctrl+C`, `Ctrl+V`, `Ctrl+X`).
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Bloqueio do clique direito (menu de contexto).
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101M16.172 13.828l-4.01-4.01m.002-2.828l4.01 4.01a4 4 0 105.656-5.656l-4-4a4 4 0 00-5.656 0z"></path></svg>
+                **Aviso se a janela for minimizada ou se o aluno mudar de aba.**
+            </li>
+        </ul>
+        
+        <!-- URL do Google Forms: COLOQUE AQUI O LINK DA SUA AVALIAÇÃO -->
+        <input type="url" id="formUrl" value="https://docs.google.com/forms/d/e/1FAIpQLSfpKqL_YfJ4zGz3QJ0V8Y_Qx4f9X6l5O8XvT9C-R5v5Gz7g/viewform?usp=sf_link"
+               class="w-full p-3 mb-6 border-2 border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
+               placeholder="Insira a URL do seu Google Forms aqui" readonly>
+
+        <button onclick="openSecureExamWindow()"
+                class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]">
+            Iniciar Avaliação Restrita
+        </button>
+
+        <p class="mt-8 text-xs text-gray-500 text-center">
+            *Esta interface é um wrapper de segurança e não altera o Google Forms original.
+        </p>
+    </div>
+
+    <!-- Container do Alerta Customizado -->
+    <div id="custom-alert-container" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div id="custom-alert-box" class="custom-alert bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-md w-11/12 border-t-4 border-red-500 scale-90 opacity-0">
+            <h2 class="text-xl font-bold text-red-600 mb-3 flex items-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.398 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                ALERTA DE SEGURANÇA!
+            </h2>
+            <p id="alert-message" class="text-gray-700 mb-4">Você saiu da janela de avaliação.</p>
+            <button onclick="closeCustomAlert()" class="w-full bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition duration-150">
+                Entendi e Voltar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para rastrear a janela do exame
+        let examWindow = null;
+        const formUrlInput = document.getElementById('formUrl');
+
+        /**
+         * Exibe o alerta customizado na tela.
+         * @param {string} message - A mensagem a ser exibida.
+         */
+        function showCustomAlert(message) {
+            const container = document.getElementById('custom-alert-container');
+            const box = document.getElementById('custom-alert-box');
+            document.getElementById('alert-message').textContent = message;
+
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            // Força o reflow para aplicar a transição
+            void box.offsetWidth; 
+            box.classList.remove('scale-90', 'opacity-0');
+            box.classList.add('scale-100', 'opacity-100');
+        }
+
+        /**
+         * Fecha o alerta customizado e tenta focar na janela do exame.
+         */
+        function closeCustomAlert() {
+            const container = document.getElementById('custom-alert-container');
+            const box = document.getElementById('custom-alert-box');
+            
+            box.classList.remove('scale-100', 'opacity-100');
+            box.classList.add('scale-90', 'opacity-0');
+            
+            setTimeout(() => {
+                container.classList.remove('flex');
+                container.classList.add('hidden');
+                
+                // Tenta focar na janela do exame para trazer o aluno de volta
+                if (examWindow && !examWindow.closed) {
+                    examWindow.focus();
+                }
+            }, 300); // Deve corresponder à duração da transição
+        }
+
+        /**
+         * Abre a janela de avaliação em um ambiente restrito.
+         */
+        function openSecureExamWindow() {
+            const url = formUrlInput.value.trim();
+            if (!url) {
+                showCustomAlert("Por favor, insira a URL do seu Google Forms no campo acima.");
+                return;
+            }
+
+            const features = 'width=1000,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no';
+            
+            // Abre uma nova janela/aba com as configurações restritas
+            // Note: O Forms URL será injetado no iframe dentro do conteúdo abaixo
+            examWindow = window.open('', 'SecureExamWindow', features);
+
+            if (!examWindow) {
+                showCustomAlert("O bloqueador de pop-ups impediu a abertura da avaliação. Por favor, desabilite-o para este site e tente novamente.");
+                return;
+            }
+
+            // O conteúdo HTML completo que contém o iframe do Forms e o script de segurança
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <title>Avaliação Online - Nível de Segurança: Alto</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        /* Estilo básico para garantir que o iframe preencha a tela */
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f0f0f0; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                        .security-overlay {
+                            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background-color: rgba(255, 0, 0, 0.95); color: white;
+                            display: none; flex-direction: column; align-items: center; justify-content: center;
+                            font-family: sans-serif; font-size: 24px; text-align: center;
+                            padding: 20px; z-index: 9999;
+                            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+                        }
+                        .security-overlay.active { display: flex; }
+                    </style>
+                </head>
+                <body>
+                    <!-- Incorpora o Google Forms dentro de um iframe -->
+                    <iframe id="exam-iframe" src="${url}" allow="clipboard-read; clipboard-write"></iframe>
+                    
+                    <!-- Overlay de aviso quando o aluno sai da aba -->
+                    <div id="security-warning" class="security-overlay">
+                        <h2>⚠️ ATENÇÃO: Mudança de Foco Detectada! ⚠️</h2>
+                        <p style="font-size: 18px; margin-top: 15px;">Se você sair desta janela novamente, a avaliação será encerrada automaticamente. Volte e continue.</p>
+                    </div>
+                    
+                    <script>
+                        // O código de segurança mais crucial para a janela do exame!
+                        
+                        const warningOverlay = document.getElementById('security-warning');
+                        let blurCount = 0;
+                        const MAX_BLUR_COUNT = 3; // Limite de vezes que o aluno pode sair antes de fechar.
+                        
+                        // 1. Bloqueia o clique direito (menu de contexto)
+                        document.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                        });
+
+                        // 2. Bloqueia atalhos de teclado (Ctrl+C, Ctrl+V, F12, etc.)
+                        document.addEventListener('keydown', (e) => {
+                            // F12 (Ferramentas de Desenvolvedor)
+                            if (e.key === 'F12') {
+                                e.preventDefault();
+                            }
+
+                            // Combinações comuns (Ctrl/Cmd + C, V, X, A, U, Shift+I)
+                            if ((e.ctrlKey || e.metaKey)) {
+                                // C, V, X, A (Copy, Paste, Cut, Select All), U (View Source)
+                                if (['c', 'v', 'x', 'a', 'u'].includes(e.key.toLowerCase())) {
+                                    e.preventDefault();
+                                }
+                            }
+
+                            // Print Screen (Bloqueio experimental, pode não funcionar em todos os OS/Browsers)
+                            if (e.key === 'PrintScreen' || (e.ctrlKey && e.key === 'p')) {
+                                // e.preventDefault(); 
+                            }
+
+                            // Ctrl+Shift+I (Inspecionar elemento)
+                            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                                e.preventDefault();
+                            }
+                        });
+
+                        // 3. Detecta se a janela perde o foco (muda de aba ou minimiza)
+                        window.addEventListener('blur', () => {
+                            blurCount++;
+                            
+                            if (blurCount >= MAX_BLUR_COUNT) {
+                                // Fecha a janela após atingir o limite de avisos
+                                // Usamos alert() aqui pois estamos em um pop-up isolado
+                                alert('Você violou a regra de foco múltiplas vezes (' + blurCount + ' de ' + MAX_BLUR_COUNT + '). A avaliação será encerrada agora.');
+                                window.close();
+                                return;
+                            }
+
+                            // Atualiza a mensagem de aviso para mostrar a contagem
+                            const warningText = document.querySelector('#security-warning p');
+                            warningText.textContent = 'Você já saiu ' + blurCount + ' vez(es). A avaliação será encerrada se sair mais ' + (MAX_BLUR_COUNT - blurCount) + ' vez(es). Volte e continue.';
+
+                            warningOverlay.classList.add('active');
+                        });
+
+                        // 4. Quando a janela volta a ter foco (aluno retorna)
+                        window.addEventListener('focus', () => {
+                            warningOverlay.classList.remove('active');
+                        });
+
+                    </script>
+                </body>
+                </html>
+            `;
+
+            // Sobrescreve o conteúdo da nova janela com o HTML seguro
+            examWindow.document.write(htmlContent);
+            examWindow.document.close();
+
+            // Tenta fechar a janela principal para forçar o foco na nova
+            // window.close(); // Comentei para evitar fechar a página do Mestre Leal
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Interface principal pronta.");
+            // Atualiza o valor do input com a URL de teste (para que Mestre Leal não precise digitar)
+            // formUrlInput.value = "https://docs.google.com/forms/d/e/1FAIpQLSfpKqL_YfJ4zGz3QJ0V8Y_Qx4f9X6l5O8XvT9C-R5v5Gz7g/viewform?usp=sf_link";
+        });
+
+    </script>
+</body>
+</html>
