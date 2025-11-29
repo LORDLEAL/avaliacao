@@ -1,149 +1,168 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Avaliação - Prof. Leal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>Avaliação 2 – Prof. Leal</title>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-        .custom-alert {
-            transition: all 0.3s ease;
-        }
-    </style>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+}
+
+header {
+  background: #ddd;
+  padding: 15px;
+  text-align: center;
+}
+
+#timer {
+  font-size: 20px;
+  color: darkred;
+  font-weight: bold;
+}
+
+.alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.alert-box {
+  background: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.alert-box button {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+iframe {
+  width: 100%;
+  height: calc(100vh - 130px);
+  border: none;
+}
+
+#logFinal {
+  padding: 25px;
+  text-align: center;
+}
+</style>
 </head>
 
-<body class="p-6 min-h-screen flex items-center justify-center">
+<body>
 
-<div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-xl">
-    <h1 class="text-2xl font-bold mb-4">Avaliação 2 - Individual - Prof. Leal</h1>
+<header>
+  <h2>Avaliação 2 – Individual – Prof. Leal</h2>
+  ⚠️ <strong>Avaliação monitorada</strong><br>
+  <small>
+    Trocas de aba, atalhos e comportamentos suspeitos são registrados e considerados na correção.
+  </small>
+  <div>Tempo restante: <span id="timer">01:20:00</span></div>
+</header>
 
-    <!-- CONTADOR -->
-    <div class="mb-4 p-3 bg-gray-100 rounded text-center">
-        <span class="font-semibold">Tempo restante:</span>
-        <span id="timer" class="font-bold text-red-600 text-lg">01:20:00</span>
-    </div>
+<iframe 
+  id="formulario"
+  src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true">
+</iframe>
 
-    <input type="url" id="formUrl"
-           value="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?usp=header"
-           class="w-full p-3 mb-6 border rounded"
-           readonly>
-
-    <button onclick="openSecureExamWindow()"
-            class="w-full bg-indigo-600 text-white py-3 rounded hover:bg-indigo-700">
-        Iniciar Avaliação
-    </button>
-</div>
-
-<!-- ALERTA -->
-<div id="custom-alert-container"
-     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div id="custom-alert-box"
-         class="custom-alert bg-white p-6 rounded scale-90 opacity-0 max-w-md">
-        <h2 class="font-bold text-red-600 mb-2">⚠ Alerta</h2>
-        <p id="alert-message" class="mb-4">Você saiu da avaliação.</p>
-        <button onclick="closeCustomAlert()"
-                class="bg-red-600 text-white px-4 py-2 rounded w-full">
-            Voltar
-        </button>
-    </div>
+<div class="alert-overlay" id="alert">
+  <div class="alert-box">
+    <h3>⚠️ Atenção</h3>
+    <p id="alert-msg"></p>
+    <button onclick="fecharAlerta()">Entendi</button>
+  </div>
 </div>
 
 <script>
-    let examWindow = null;
-    let tempoTotal = 80 * 60; // 1h e 20 min
-    let intervaloTimer = null;
+/* ===== CONTADOR ===== */
+let tempo = 80 * 60;
+let ocorrencias = {
+  trocaAba: 0,
+  atalhos: 0
+};
 
-    function showCustomAlert(msg) {
-        const c = document.getElementById('custom-alert-container');
-        const b = document.getElementById('custom-alert-box');
-        document.getElementById('alert-message').textContent = msg;
+function atualizarTimer() {
+  let h = String(Math.floor(tempo / 3600)).padStart(2,'0');
+  let m = String(Math.floor((tempo % 3600) / 60)).padStart(2,'0');
+  let s = String(tempo % 60).padStart(2,'0');
 
-        c.classList.remove('hidden');
-        c.classList.add('flex');
-        void b.offsetWidth;
-        b.classList.remove('scale-90', 'opacity-0');
-    }
+  document.getElementById("timer").textContent = `${h}:${m}:${s}`;
 
-    function closeCustomAlert() {
-        const c = document.getElementById('custom-alert-container');
-        const b = document.getElementById('custom-alert-box');
+  if (tempo <= 0) {
+    finalizarAvaliacao();
+  }
+  tempo--;
+}
 
-        b.classList.add('scale-90', 'opacity-0');
+setInterval(atualizarTimer, 1000);
+atualizarTimer();
 
-        setTimeout(() => {
-            c.classList.add('hidden');
-            c.classList.remove('flex');
-            if (examWindow && !examWindow.closed) examWindow.focus();
-        }, 300);
-    }
+/* ===== ALERTA ===== */
+function mostrarAlerta(msg) {
+  document.getElementById("alert-msg").textContent = msg;
+  document.getElementById("alert").style.display = "flex";
+}
 
-    function iniciarContador() {
-        if (intervaloTimer) clearInterval(intervaloTimer);
+function fecharAlerta() {
+  document.getElementById("alert").style.display = "none";
+}
 
-        intervaloTimer = setInterval(() => {
-            const h = Math.floor(tempoTotal / 3600);
-            const m = Math.floor((tempoTotal % 3600) / 60);
-            const s = tempoTotal % 60;
+/* ===== MONITORAMENTOS ===== */
 
-            document.getElementById('timer').textContent =
-                String(h).padStart(2, '0') + ':' +
-                String(m).padStart(2, '0') + ':' +
-                String(s).padStart(2, '0');
+// Troca de aba / minimizar
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    ocorrencias.trocaAba++;
+    mostrarAlerta(
+      `Troca de aba detectada.\nOcorrências registradas: ${ocorrencias.trocaAba}`
+    );
+  }
+});
 
-            if (tempoTotal <= 0) {
-                clearInterval(intervaloTimer);
-                showCustomAlert('⏰ Tempo encerrado! A avaliação foi finalizada.');
-                if (examWindow && !examWindow.closed) examWindow.close();
-                return;
-            }
+// Atalhos suspeitos
+document.addEventListener('keydown', e => {
+  if (
+    e.key === 'PrintScreen' ||
+    (e.ctrlKey && ['c','v','x','u','p','s'].includes(e.key.toLowerCase()))
+  ) {
+    e.preventDefault();
+    ocorrencias.atalhos++;
+    mostrarAlerta(
+      `Ação não permitida detectada.\nOcorrências registradas: ${ocorrencias.atalhos}`
+    );
+  }
+});
 
-            tempoTotal--;
-        }, 1000);
-    }
-
-    function openSecureExamWindow() {
-        const url = document.getElementById('formUrl').value;
-
-        examWindow = window.open(
-            url,
-            'SecureExam',
-            'width=1000,height=800,toolbar=no,menubar=no,location=no,resizable=yes'
-        );
-
-        if (!examWindow) {
-            showCustomAlert('Desative o bloqueador de pop-ups.');
-            return;
-        }
-
-        iniciarContador();
-
-        window.addEventListener('blur', () =>
-            showCustomAlert('Você saiu da janela da avaliação.')
-        );
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                showCustomAlert('Troca de aba detectada.')
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && ['c', 'v', 'x'].includes(e.key.toLowerCase())) {
-                e.preventDefault();
-                showCustomAlert('Copiar e colar não é permitido.')
-            }
-        });
-
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            showCustomAlert('Clique direito bloqueado.');
-        });
-    }
+/* ===== FINALIZAÇÃO E LOG ===== */
+function finalizarAvaliacao() {
+  document.body.innerHTML = `
+    <div id="logFinal">
+      <h2>⏰ Avaliação encerrada</h2>
+      <p><strong>Resumo de monitoramento:</strong></p>
+      <p>Trocas de aba/minimização: <strong>${ocorrencias.trocaAba}</strong></p>
+      <p>Tentativas de atalhos/copiar: <strong>${ocorrencias.atalhos}</strong></p>
+      <br>
+      <small>
+        Esses registros indicam comportamento incompatível com avaliação monitorada
+        e poderão ser considerados na correção.
+      </small>
+    </div>
+  `;
+}
 </script>
 
 </body>
