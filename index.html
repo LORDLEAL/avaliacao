@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Avaliação 2 – Prof. Leal</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -13,12 +15,17 @@ body {
 
 header {
   background: #ddd;
-  padding: 15px;
+  padding: 12px;
   text-align: center;
 }
 
+header h2 {
+  margin: 5px 0;
+  font-size: 1.2rem;
+}
+
 #timer {
-  font-size: 20px;
+  font-size: 1.1rem;
   color: darkred;
   font-weight: bold;
 }
@@ -26,7 +33,7 @@ header {
 .alert-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.6);
+  background: rgba(0,0,0,.75);
   display: none;
   align-items: center;
   justify-content: center;
@@ -35,10 +42,14 @@ header {
 
 .alert-box {
   background: #fff;
-  padding: 25px;
+  padding: 22px;
   border-radius: 8px;
   text-align: center;
-  max-width: 360px;
+  max-width: 90%;
+}
+
+.alert-box h3 {
+  color: #d32f2f;
 }
 
 .alert-box button {
@@ -52,13 +63,17 @@ header {
 
 iframe {
   width: 100%;
-  height: calc(100vh - 130px);
+  height: calc(100vh - 120px);
   border: none;
 }
 
-#logFinal {
-  padding: 25px;
-  text-align: center;
+@media (max-width: 768px) {
+  header h2 {
+    font-size: 1rem;
+  }
+  #timer {
+    font-size: 1rem;
+  }
 }
 </style>
 </head>
@@ -67,34 +82,37 @@ iframe {
 
 <header>
   <h2>Avaliação 2 – Individual – Prof. Leal</h2>
-  ⚠️ <strong>Avaliação monitorada</strong><br>
-  <small>
-    Trocas de aba, atalhos e comportamentos suspeitos são registrados e considerados na correção.
-  </small>
+  <strong>⚠️ AVALIAÇÃO MONITORADA</strong><br>
+  <small>Trocas de aba e tentativas de cópia são registradas.</small>
   <div>Tempo restante: <span id="timer">01:20:00</span></div>
 </header>
 
 <iframe 
-  id="formulario"
   src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true">
 </iframe>
 
 <div class="alert-overlay" id="alert">
   <div class="alert-box">
-    <h3>⚠️ Atenção</h3>
-    <p id="alert-msg"></p>
+    <h3>⚠️ ATENÇÃO</h3>
+    <p>
+      Você saiu da aba da avaliação.<br><br>
+      Esse comportamento está sendo <strong>registrado</strong>
+      e será considerado na correção.
+    </p>
     <button onclick="fecharAlerta()">Entendi</button>
   </div>
 </div>
 
 <script>
-/* ===== CONTADOR ===== */
-let tempo = 80 * 60;
-let ocorrencias = {
-  trocaAba: 0,
-  atalhos: 0
-};
+/* ==== CONFIG ==== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0-PLAc30n46PMp7Y0dwaSWJVVrwhS_1GEh_nEu_cCj9U2dSl2BCoYgdli9qlOEtnfzA/exec";
 
+/* ==== MONITORAMENTO ==== */
+let tempo = 80 * 60;
+let trocasAba = 0;
+let tentativasAtalho = 0;
+
+/* ==== TIMER ==== */
 function atualizarTimer() {
   let h = String(Math.floor(tempo / 3600)).padStart(2,'0');
   let m = String(Math.floor((tempo % 3600) / 60)).padStart(2,'0');
@@ -104,6 +122,7 @@ function atualizarTimer() {
 
   if (tempo <= 0) {
     finalizarAvaliacao();
+    document.body.innerHTML = "<h2 style='text-align:center'>Tempo esgotado.</h2>";
   }
   tempo--;
 }
@@ -111,9 +130,32 @@ function atualizarTimer() {
 setInterval(atualizarTimer, 1000);
 atualizarTimer();
 
-/* ===== ALERTA ===== */
-function mostrarAlerta(msg) {
-  document.getElementById("alert-msg").textContent = msg;
+/* ==== BLOQUEIOS ==== */
+document.addEventListener('copy', e => e.preventDefault());
+document.addEventListener('paste', e => e.preventDefault());
+document.addEventListener('cut', e => e.preventDefault());
+
+document.addEventListener('keydown', e => {
+  if (
+    e.key === 'PrintScreen' ||
+    (e.ctrlKey && ['p','s','u','c','v','x'].includes(e.key.toLowerCase()))
+  ) {
+    e.preventDefault();
+    tentativasAtalho++;
+    mostrarAlerta();
+  }
+});
+
+/* ==== TROCA DE ABA ==== */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    trocasAba++;
+    mostrarAlerta();
+  }
+});
+
+/* ==== ALERTA ==== */
+function mostrarAlerta() {
   document.getElementById("alert").style.display = "flex";
 }
 
@@ -121,48 +163,24 @@ function fecharAlerta() {
   document.getElementById("alert").style.display = "none";
 }
 
-/* ===== MONITORAMENTOS ===== */
-
-// Troca de aba / minimizar
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    ocorrencias.trocaAba++;
-    mostrarAlerta(
-      `Troca de aba detectada.\nOcorrências registradas: ${ocorrencias.trocaAba}`
-    );
-  }
-});
-
-// Atalhos suspeitos
-document.addEventListener('keydown', e => {
-  if (
-    e.key === 'PrintScreen' ||
-    (e.ctrlKey && ['c','v','x','u','p','s'].includes(e.key.toLowerCase()))
-  ) {
-    e.preventDefault();
-    ocorrencias.atalhos++;
-    mostrarAlerta(
-      `Ação não permitida detectada.\nOcorrências registradas: ${ocorrencias.atalhos}`
-    );
-  }
-});
-
-/* ===== FINALIZAÇÃO E LOG ===== */
+/* ==== ENVIO PARA GOOGLE SHEETS ==== */
 function finalizarAvaliacao() {
-  document.body.innerHTML = `
-    <div id="logFinal">
-      <h2>⏰ Avaliação encerrada</h2>
-      <p><strong>Resumo de monitoramento:</strong></p>
-      <p>Trocas de aba/minimização: <strong>${ocorrencias.trocaAba}</strong></p>
-      <p>Tentativas de atalhos/copiar: <strong>${ocorrencias.atalhos}</strong></p>
-      <br>
-      <small>
-        Esses registros indicam comportamento incompatível com avaliação monitorada
-        e poderão ser considerados na correção.
-      </small>
-    </div>
-  `;
+  const dados = {
+    nome: "Não informado",
+    turma: "Não informada",
+    trocaAba: trocasAba,
+    atalhos: tentativasAtalho,
+    tempoRestante: tempo
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(dados)
+  }).catch(() => {});
 }
+
+/* ==== BACKUP: FECHANDO A PÁGINA ==== */
+window.addEventListener("beforeunload", finalizarAvaliacao);
 </script>
 
 </body>
