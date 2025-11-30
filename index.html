@@ -18,11 +18,6 @@ header {
   text-align: center;
 }
 
-header h2 {
-  margin: 4px 0;
-  font-size: 1.2rem;
-}
-
 #timer {
   font-size: 1.2rem;
   color: darkred;
@@ -35,11 +30,11 @@ iframe {
   border: none;
 }
 
-/* alerta */
+/* ALERTA */
 .alert-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.75);
   display: none;
   align-items: center;
   justify-content: center;
@@ -77,19 +72,22 @@ iframe {
   <div>Tempo restante: <span id="timer">01:20:00</span></div>
 </header>
 
-<!-- GOOGLE FORM DA PROVA -->
+<!-- PROVA -->
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true"></iframe>
 
 <!-- ALERTA -->
 <div class="alert-overlay" id="alert">
   <div class="alert-box">
     <h3>⚠️ Atenção</h3>
-    <p>Comportamento fora da avaliação detectado.<br>Este evento foi registrado.</p>
+    <p>
+      Você saiu da tela da avaliação.<br>
+      Este comportamento foi <b>registrado</b>.
+    </p>
     <button onclick="fecharAlerta()">Entendi</button>
   </div>
 </div>
 
-<!-- FORMULÁRIO OCULTO → FORMSPREE -->
+<!-- FORMULÁRIO DE LOG – FORMSPREE -->
 <form id="formLog" action="https://formspree.io/f/mzzndeow" method="POST" style="display:none;">
   <input type="hidden" name="avaliacao" value="Avaliação 2 – Prof. Leal">
   <input type="hidden" name="trocas_aba" id="logTrocas">
@@ -99,7 +97,7 @@ iframe {
 </form>
 
 <script>
-/* ===== VARIÁVEIS ===== */
+/* ===== CONTROLE ===== */
 let tempo = 80 * 60;
 let trocasAba = 0;
 let atalhos = 0;
@@ -107,9 +105,9 @@ let logEnviado = false;
 
 /* ===== TIMER ===== */
 function atualizarTimer() {
-  let h = String(Math.floor(tempo / 3600)).padStart(2, '0');
-  let m = String(Math.floor((tempo % 3600) / 60)).padStart(2, '0');
-  let s = String(tempo % 60).padStart(2, '0');
+  const h = String(Math.floor(tempo / 3600)).padStart(2, '0');
+  const m = String(Math.floor((tempo % 3600) / 60)).padStart(2, '0');
+  const s = String(tempo % 60).padStart(2, '0');
   document.getElementById("timer").textContent = `${h}:${m}:${s}`;
 
   if (tempo <= 0) {
@@ -121,7 +119,17 @@ function atualizarTimer() {
 setInterval(atualizarTimer, 1000);
 atualizarTimer();
 
-/* ===== MONITORAMENTO ===== */
+/* ===== ALERTA ===== */
+function mostrarAlerta() {
+  document.getElementById("alert").style.display = "flex";
+}
+function fecharAlerta() {
+  document.getElementById("alert").style.display = "none";
+}
+
+/* ===== DETECÇÃO DE SAÍDA DE TELA ===== */
+
+// troca de aba
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     trocasAba++;
@@ -129,6 +137,13 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// clicou fora da página
+window.addEventListener("blur", () => {
+  trocasAba++;
+  mostrarAlerta();
+});
+
+// atalhos
 document.addEventListener("keydown", e => {
   if (
     e.key === "PrintScreen" ||
@@ -140,15 +155,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-/* ===== ALERTA ===== */
-function mostrarAlerta() {
-  document.getElementById("alert").style.display = "flex";
-}
-function fecharAlerta() {
-  document.getElementById("alert").style.display = "none";
-}
-
-/* ===== ENVIO FORMSPREE ===== */
+/* ===== ENVIO DO LOG ===== */
 function enviarLog() {
   if (logEnviado) return;
   logEnviado = true;
@@ -161,7 +168,7 @@ function enviarLog() {
   document.getElementById("formLog").submit();
 }
 
-/* envia também se fechar a aba */
+// tentativa de sair
 window.addEventListener("beforeunload", enviarLog);
 </script>
 
