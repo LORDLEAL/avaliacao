@@ -12,10 +12,16 @@ body {
   background: #f5f5f5;
 }
 
+/* ===== CABEÇALHO ===== */
 header {
   background: #ddd;
   padding: 12px;
   text-align: center;
+}
+
+header h2 {
+  margin: 4px 0;
+  font-size: 1.2rem;
 }
 
 #timer {
@@ -24,17 +30,18 @@ header {
   font-weight: bold;
 }
 
+/* ===== GOOGLE FORM ===== */
 iframe {
   width: 100%;
   height: calc(100vh - 120px);
   border: none;
 }
 
-/* ALERTA */
+/* ===== ALERTA ===== */
 .alert-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.75);
+  background: rgba(0,0,0,.7);
   display: none;
   align-items: center;
   justify-content: center;
@@ -54,12 +61,20 @@ iframe {
 }
 
 .alert-box button {
+  margin-top: 12px;
   background: #d32f2f;
   color: #fff;
   border: none;
   padding: 10px 18px;
   border-radius: 5px;
   cursor: pointer;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  iframe {
+    height: calc(100vh - 150px);
+  }
 }
 </style>
 </head>
@@ -72,38 +87,48 @@ iframe {
   <div>Tempo restante: <span id="timer">01:20:00</span></div>
 </header>
 
-<!-- PROVA -->
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true"></iframe>
+<!-- GOOGLE FORM -->
+<iframe
+  src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true">
+</iframe>
 
 <!-- ALERTA -->
 <div class="alert-overlay" id="alert">
   <div class="alert-box">
     <h3>⚠️ Atenção</h3>
     <p>
-      Você saiu da tela da avaliação.<br>
-      Este comportamento foi <b>registrado</b>.
+      Comportamento fora da avaliação detectado.<br>
+      Este evento foi registrado.
     </p>
     <button onclick="fecharAlerta()">Entendi</button>
   </div>
 </div>
 
 <!-- FORMULÁRIO DE LOG – FORMSPREE -->
-<form id="formLog" action="https://formspree.io/f/mzzndeow" method="POST" style="display:none;">
+<form id="formLog"
+      action="https://formspree.io/f/mzzndeow"
+      method="POST"
+      style="display:none;">
   <input type="hidden" name="avaliacao" value="Avaliação 2 – Prof. Leal">
   <input type="hidden" name="trocas_aba" id="logTrocas">
   <input type="hidden" name="atalhos" id="logAtalhos">
   <input type="hidden" name="tempo_restante" id="logTempo">
-  <input type="hidden" name="data" id="logData">
+  <input type="hidden" name="data_hora" id="logData">
 </form>
 
 <script>
-/* ===== CONTROLE ===== */
+/* =========================
+   VARIÁVEIS DE CONTROLE
+========================= */
 let tempo = 80 * 60;
 let trocasAba = 0;
 let atalhos = 0;
 let logEnviado = false;
+let alertaVisivel = false;
 
-/* ===== TIMER ===== */
+/* =========================
+   TIMER
+========================= */
 function atualizarTimer() {
   const h = String(Math.floor(tempo / 3600)).padStart(2, '0');
   const m = String(Math.floor((tempo % 3600) / 60)).padStart(2, '0');
@@ -112,38 +137,41 @@ function atualizarTimer() {
 
   if (tempo <= 0) {
     enviarLog();
-    document.body.innerHTML = "<h2 style='text-align:center'>Tempo esgotado.</h2>";
+    document.body.innerHTML =
+      "<h2 style='text-align:center;margin-top:40px'>Tempo esgotado.</h2>";
   }
   tempo--;
 }
 setInterval(atualizarTimer, 1000);
 atualizarTimer();
 
-/* ===== ALERTA ===== */
+/* =========================
+   ALERTA
+========================= */
 function mostrarAlerta() {
+  if (alertaVisivel) return;
+  alertaVisivel = true;
   document.getElementById("alert").style.display = "flex";
 }
+
 function fecharAlerta() {
+  alertaVisivel = false;
   document.getElementById("alert").style.display = "none";
 }
 
-/* ===== DETECÇÃO DE SAÍDA DE TELA ===== */
+/* =========================
+   DETECÇÃO REAL (SEM LOOP)
+========================= */
 
-// troca de aba
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
+// mouse saiu pelo topo (tentativa de trocar aba/janela)
+document.addEventListener("mouseleave", e => {
+  if (e.clientY <= 0) {
     trocasAba++;
     mostrarAlerta();
   }
 });
 
-// clicou fora da página
-window.addEventListener("blur", () => {
-  trocasAba++;
-  mostrarAlerta();
-});
-
-// atalhos
+// atalhos de cópia / print
 document.addEventListener("keydown", e => {
   if (
     e.key === "PrintScreen" ||
@@ -155,7 +183,9 @@ document.addEventListener("keydown", e => {
   }
 });
 
-/* ===== ENVIO DO LOG ===== */
+/* =========================
+   ENVIO DO LOG – FORMSPREE
+========================= */
 function enviarLog() {
   if (logEnviado) return;
   logEnviado = true;
@@ -163,12 +193,13 @@ function enviarLog() {
   document.getElementById("logTrocas").value = trocasAba;
   document.getElementById("logAtalhos").value = atalhos;
   document.getElementById("logTempo").value = tempo;
-  document.getElementById("logData").value = new Date().toLocaleString("pt-BR");
+  document.getElementById("logData").value =
+    new Date().toLocaleString("pt-BR");
 
   document.getElementById("formLog").submit();
 }
 
-// tentativa de sair
+// garante envio ao fechar a página
 window.addEventListener("beforeunload", enviarLog);
 </script>
 
