@@ -31,7 +31,7 @@ header h2 {
 
 iframe {
   width: 100%;
-  height: calc(100vh - 140px);
+  height: calc(100vh - 145px);
   border: none;
 }
 
@@ -65,12 +65,6 @@ iframe {
   border-radius: 5px;
   cursor: pointer;
 }
-
-@media (max-width: 768px) {
-  iframe {
-    height: calc(100vh - 170px);
-  }
-}
 </style>
 </head>
 
@@ -101,32 +95,37 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7dFBIEIk_1akRqE9-e
 
 /* ========= VARIÁVEIS ========= */
 let tempo = 80 * 60;
-let TrocasAba = 0;
-let Atalhos = 0;
+let trocasAba = 0;
+let atalhos = 0;
 let enviado = false;
+let intervalo;
 
 /* ========= TIMER ========= */
 function atualizarTimer() {
+  if (tempo <= 0) {
+    clearInterval(intervalo);
+    registrarLog();
+    document.body.innerHTML = "<h2 style='text-align:center'>⏰ Tempo esgotado.</h2>";
+    return;
+  }
+
   let h = String(Math.floor(tempo / 3600)).padStart(2, '0');
   let m = String(Math.floor((tempo % 3600) / 60)).padStart(2, '0');
   let s = String(tempo % 60).padStart(2, '0');
 
   document.getElementById("timer").textContent = `${h}:${m}:${s}`;
-
-  if (tempo <= 0) {
-    registrarLog();
-    document.body.innerHTML = "<h2 style='text-align:center'>Tempo esgotado.</h2>";
-  }
   tempo--;
 }
-setInterval(atualizarTimer, 1000);
+
+intervalo = setInterval(atualizarTimer, 1000);
 atualizarTimer();
 
 /* ========= MONITORAMENTO ========= */
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    TrocasAba++;
+    trocasAba++;
     mostrarAlerta();
+    registrarLog();
   }
 });
 
@@ -135,9 +134,10 @@ document.addEventListener("keydown", e => {
     e.key === "PrintScreen" ||
     (e.ctrlKey && ["c","v","x","u","s","p"].includes(e.key.toLowerCase()))
   ) {
-    Atalhos++;
+    atalhos++;
     e.preventDefault();
     mostrarAlerta();
+    registrarLog();
   }
 });
 
@@ -157,22 +157,15 @@ function registrarLog() {
   const dados = {
     Nome: "Não informado",
     Turma: "Não informada",
-    TrocasAba: TrocasAba,
-    Atalhos: Atalhos,
+    TrocasAba: trocasAba,
+    Atalhos: atalhos,
     TempoRestante: tempo
   };
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(dados),
-    keepalive: true
-  })
-  .then(resp => resp.text())
-  .then(res => console.log("✅ LOG REGISTRADO:", res))
-  .catch(err => console.error("❌ Erro ao registrar log:", err));
+  navigator.sendBeacon(
+    SCRIPT_URL,
+    new Blob([JSON.stringify(dados)], { type: "application/json" })
+  );
 }
 
 window.addEventListener("beforeunload", registrarLog);
