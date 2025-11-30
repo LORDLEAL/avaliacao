@@ -2,7 +2,6 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Avaliação 2 – Prof. Leal</title>
 
 <style>
@@ -14,31 +13,20 @@ body {
 
 header {
   background: #ddd;
-  padding: 12px;
+  padding: 15px;
   text-align: center;
 }
 
-header h2 {
-  margin: 4px 0;
-  font-size: 1.2rem;
-}
-
 #timer {
-  font-size: 1.2rem;
+  font-size: 20px;
   color: darkred;
   font-weight: bold;
-}
-
-iframe {
-  width: 100%;
-  height: calc(100vh - 140px);
-  border: none;
 }
 
 .alert-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.6);
   display: none;
   align-items: center;
   justify-content: center;
@@ -47,29 +35,25 @@ iframe {
 
 .alert-box {
   background: #fff;
-  padding: 22px;
+  padding: 25px;
   border-radius: 8px;
   text-align: center;
-  max-width: 360px;
-}
-
-.alert-box h3 {
-  color: #d32f2f;
+  max-width: 320px;
 }
 
 .alert-box button {
   background: #d32f2f;
   color: #fff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 10px 18px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
-  iframe {
-    height: calc(100vh - 170px);
-  }
+iframe {
+  width: 100%;
+  height: calc(100vh - 110px);
+  border: none;
 }
 </style>
 </head>
@@ -78,104 +62,72 @@ iframe {
 
 <header>
   <h2>Avaliação 2 – Individual – Prof. Leal</h2>
-  ⚠️ Avaliação monitorada  
-  <div>Tempo restante: <span id="timer">01:20:00</span></div>
+  ⚠️ Avaliação com controle de Saída da Tela!
+  <div>Tempo restante: <span id="timer">01:10:00</span></div>
 </header>
 
-<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true"></iframe>
+<iframe 
+  src="https://docs.google.com/forms/d/e/1FAIpQLSe_NR3Ge7AQw-WfBTYuthT1TP12Ez1u_xVGDPGaJaFgvJ7BAw/viewform?embedded=true">
+</iframe>
 
 <div class="alert-overlay" id="alert">
   <div class="alert-box">
     <h3>⚠️ Atenção</h3>
-    <p>
-      Comportamento fora da prova detectado.<br>
-      Este evento foi REGISTRADO e será analisado.
-    </p>
+    <p>Você saiu da aba da avaliação.</p>
     <button onclick="fecharAlerta()">Entendi</button>
   </div>
 </div>
 
 <script>
-/* ========= CONFIGURAÇÃO ========= */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7dFBIEIk_1akRqE9-egbJdId2SNwfamFZerXXqGmJJbILVri3RjFwuDxjzfAbeTIoow/exec";
-
-/* ========= VARIÁVEIS ========= */
+/* ===== CONTADOR 1h20min ===== */
 let tempo = 80 * 60;
-let TrocasAba = 0;
-let Atalhos = 0;
-let enviado = false;
 
-/* ========= TIMER ========= */
 function atualizarTimer() {
-  let h = String(Math.floor(tempo / 3600)).padStart(2, '0');
-  let m = String(Math.floor((tempo % 3600) / 60)).padStart(2, '0');
-  let s = String(tempo % 60).padStart(2, '0');
+  let h = String(Math.floor(tempo / 3600)).padStart(2,'0');
+  let m = String(Math.floor((tempo % 3600) / 60)).padStart(2,'0');
+  let s = String(tempo % 60).padStart(2,'0');
 
   document.getElementById("timer").textContent = `${h}:${m}:${s}`;
 
   if (tempo <= 0) {
-    registrarLog();
-    document.body.innerHTML = "<h2 style='text-align:center'>Tempo esgotado.</h2>";
+    alert("Tempo encerrado!");
+    document.body.innerHTML = "<h2>Tempo esgotado.</h2>";
   }
   tempo--;
 }
+
 setInterval(atualizarTimer, 1000);
 atualizarTimer();
 
-/* ========= MONITORAMENTO ========= */
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    TrocasAba++;
-    mostrarAlerta();
-  }
-});
+/* ===== BLOQUEIOS ===== */
+document.addEventListener('copy', e => e.preventDefault());
+document.addEventListener('paste', e => e.preventDefault());
+document.addEventListener('cut', e => e.preventDefault());
 
-document.addEventListener("keydown", e => {
+document.addEventListener('keydown', e => {
   if (
-    e.key === "PrintScreen" ||
-    (e.ctrlKey && ["c","v","x","u","s","p"].includes(e.key.toLowerCase()))
+    e.key === 'PrintScreen' ||
+    (e.ctrlKey && ['p','s','u','c','v','x'].includes(e.key.toLowerCase()))
   ) {
-    Atalhos++;
     e.preventDefault();
     mostrarAlerta();
   }
 });
 
-/* ========= ALERTA ========= */
+/* ✅ TROCA DE ABA (SEM QUEBRAR O IFRAME) */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    mostrarAlerta();
+  }
+});
+
 function mostrarAlerta() {
   document.getElementById("alert").style.display = "flex";
 }
+
 function fecharAlerta() {
   document.getElementById("alert").style.display = "none";
 }
-
-/* ========= ENVIO PARA GOOGLE SHEETS ========= */
-function registrarLog() {
-  if (enviado) return;
-  enviado = true;
-
-  const dados = {
-    Nome: "Não informado",
-    Turma: "Não informada",
-    TrocasAba: TrocasAba,
-    Atalhos: Atalhos,
-    TempoRestante: tempo
-  };
-
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(dados),
-    keepalive: true
-  })
-  .then(resp => resp.text())
-  .then(res => console.log("✅ LOG REGISTRADO:", res))
-  .catch(err => console.error("❌ Erro ao registrar log:", err));
-}
-
-window.addEventListener("beforeunload", registrarLog);
 </script>
 
 </body>
